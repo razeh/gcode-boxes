@@ -1,37 +1,47 @@
-from mecode import G
+#!/usr/bin/env python
+
+from mecode import GMatrix
+import math
 import time
 
 
 class box(object):
-    def __init__(self, width, height):
-        self.g = G()
+    def __init__(self, height, width, depth, thickness, depth_increment, depth_to_carve):
+        self.g = GMatrix()
         self.height = height
         self.width = width
-        self.dimensions = [height, width]
-        self.tabs = [3, 3]
-        self.tab_depth = 20
-        self.bit_size = 1
+        self.depth = depth
+        self.thickness = thickness
+        self.depth_increment = depth_increment
+        self.depth_to_carve = depth_to_carve
+        self.dimensions = {"height": height, "width": width, "depth":depth}
+        self.tabs = {"height":2, "width":3, "depth":2}
+        self.bit_size = 3.175
+        self.tab_depth = self.thickness - (self.bit_size/2.0)
         self.mark_height = 10
         self.position_savepoints = []
 
-    def save_position(self):
+    def box(self, x, y):
+        " Carve a box x by y wide with little bitsize indents"
         g = self.g
-        self.position_savepoints.append((g.current_position["x"],
-                                         g.current_position["y"],
-                                         g.current_position["z"]))
-        print "saving ", self.position_savepoints[-1]
+        indent = self.bit_size/2.0
+        g.move(x+indent)
+        g.move(-indent)
+        g.move(y=y)
+        g.move(indent)
+        g.move(-indent -x)
 
-    def restore_position(self):
+    def meander(self, x, y):
         g = self.g
-        return_position = self.position_savepoints.pop()
-        print "restoring ", return_position
-        g.abs_move(return_position[0], return_position[1], return_position[2])
-
-    def meander(self, x, y, start='LL', orientation='x'):
-        g = self.g
-        self.save_position()
-        g.meander(x, y, self.bit_size*3, start, orientation)
-        self.restore_position()
+        self.box(x,y)
+        g.meander(x, y, self.bit_size, 'LL', 'y')
+        # add in a little notch because the bit is circular
+        g.move(self.bit_size/2.0)
+        g.move(-self.bit_size/2.0)
+        g.move(y=-y)
+        g.move(self.bit_size/2.0)
+        g.move(-self.bit_size/2.0)
+        g.move(-x)
 
     def mark(self):
         g = self.g
@@ -40,52 +50,96 @@ class box(object):
         self.mark_height += 5
         print g.current_position
 
-    def move(self, index, amount):
+    def box_panel(self, index, alternate=False):
         g = self.g
-        args = {'y': (0, amount),
-                'x': (amount, 0)}[index]
-        g.move(*args)
+        tab_count = self.tabs[index]
+        width = self.dimensions[index]/(1+(tab_count-1)*2.0)
 
-    def box_side(self, index, direction):
-        assert direction in [-1,1]
+        if alternate:
+            for i in range(tab_count):
+                g.move(0, width)
+                if i != (tab_count-1):
+                    self.box(self.tab_depth, width)
+        else:
+            for i in range(tab_count):
+                self.box(self.tab_depth, width)
+                if i != (tab_count-1):
+                    g.move(0, width)
+
+
+    def box_bottom(self):
         g = self.g
+        self.box_panel('depth')
+        g.push_matrix()
+        g.rotate(-math.pi/2)
+        self.box_panel('width')
+        g.rotate(-math.pi/2)
+        self.box_panel('depth')
+        g.rotate(-math.pi/2)
+        self.box_panel('width')
+        g.pop_matrix()
         
-        lookup= {'x':0, 'y':1}[index]
-
-        meander_direction = { ('x',1)  : 'UL',
-                              ('y',1)  : 'LL',
-                              ('y',-1) : 'LR',
-                            }[(index, direction)]
-
-        tab_count = self.tabs[lookup]
-        width = self.dimensions[lookup]/(1+(tab_count-1)*2.0)
-        width *= direction
-        for i in range(tab_count):
-
-            dimensions = {'x': (width, self.tab_depth, meander_direction, index),
-                          'y': (self.tab_depth, width, meander_direction, index) } [index]
-            self.meander(*dimensions)
-
-
-            if i != (tab_count-1):
-                self.move(index, width*2)
-            else:
-                self.move(index, width)
-
-
-    def box_level(self):
+    def box_side(self):
         g = self.g
+        g.push_matrix()
+        self.box_panel('depth', alternate=True)
+        g.rotate(-math.pi/2)
+        self.box_panel('height', alternate=True)
+        g.rotate(-math.pi/2)
+        g.move(0, self.depth)
+        g.rotate(-math.pi/2)
+        self.box_panel('height', alternate=True)
+        g.pop_matrix()
+    
+    def box_front(self):
+        g = self.g
+        g.push_matrix()
+        self.box_panel('width', alternate=True)
+        g.rotate(-math.pi/2)
+        self.box_panel('height')
+        g.rotate(-math.pi/2)
+        g.move(0, self.width)
+        g.rotate(-math.pi/2)
+        self.box_panel('height')
+        g.pop_matrix()
 
-        self.box_side('y', direction=1)
-        self.box_side('x', direction=1)
-        self.box_side('y', direction=-1)
+    def box_drill(self, func, start_x=0, start_y=0):
+        g = self.g
+        start_z = g.current_position['z']
+        
+        if self.g.current_position['x'] != start_x \
+           or self.g.current_position['y'] != start_y:
+            start_color = g.current_color
+            g.current_color="red"
+            g.abs_move(z=10)
+            g.abs_move(start_x, start_y)
+            g.abs_move(z=0)
+            g.current_color=start_color
 
-        g.move(-self.height, 0)
+        z = -self.depth_increment
+        while True:
+            g.abs_move(z=z)
+            func()
+            z -= self.depth_increment
+            if -z > self.depth_to_carve:
+                g.abs_move(z=-self.thickness)
+                func()
+                break
 
-
+        g.abs_move(z=start_z)
 
 if __name__ == "__main__":
-    b = box(100, 200)
-    b.box_level()
+    b = box(height=60, width=70, depth=60, thickness=12.7,
+            depth_increment = 2, depth_to_carve = 18)
+    box_gap = 30
+
+    b.g.feed(1000) # plywood
+    
+    b.box_drill(b.box_bottom)
+    b.box_drill(b.box_side, b.width+box_gap)
+    b.box_drill(b.box_side, b.width+b.height+box_gap*2)
+    b.box_drill(b.box_front, b.width+(b.height*2)+box_gap*3)
+    b.box_drill(b.box_front, b.width+(b.height*3)+box_gap*4)
+
     b.g.view(backend="matplotlib")
-    #time.sleep(600)
+
