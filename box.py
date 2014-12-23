@@ -17,19 +17,44 @@ class box(object):
         self.dimensions = {"height": height, "width": width, "depth":depth}
         self.tabs = {"height":2, "width":3, "depth":2}
         self.bit_size = 3.175
+        self.g.linewidth = self.bit_size
         self.tab_depth = self.thickness - (self.bit_size/2.0)
+        self.connector_depth = 5
+        self.connector_length = 3
         self.mark_height = 10
         self.position_savepoints = []
+
+    def should_make_connector(self):
+        g = self.g
+        current_z = g.current_position['z']
+        if current_z <= -(self.thickness - self.connector_depth):
+            return True
+        return False
+
+    def move_with_connector(self, distance):
+        g = self.g
+        if self.should_make_connector():
+            lower_cut_distance = (distance - self.connector_length)/2.0
+            g.move(0, lower_cut_distance)
+            g.move(z=self.connector_depth)
+            g.move(0, self.connector_length)
+            g.move(z=-self.connector_depth)
+            g.move(0, lower_cut_distance)
+
+        else:
+            g.move(0, distance)
 
     def box(self, x, y):
         " Carve a box x by y wide with little bitsize indents"
         g = self.g
         indent = self.bit_size/2.0
+        g.move(y=self.bit_size * .5)
         g.move(x+indent)
         g.move(-indent)
-        g.move(y=y)
+        g.move(y=y - self.bit_size)
         g.move(indent)
         g.move(-indent -x)
+        g.move(y=self.bit_size * .5)
 
     def meander(self, x, y):
         g = self.g
@@ -57,14 +82,14 @@ class box(object):
 
         if alternate:
             for i in range(tab_count):
-                g.move(0, width)
+                self.move_with_connector(width)
                 if i != (tab_count-1):
                     self.box(self.tab_depth, width)
         else:
             for i in range(tab_count):
                 self.box(self.tab_depth, width)
                 if i != (tab_count-1):
-                    g.move(0, width)
+                    self.move_with_connector(width)
 
 
     def box_bottom(self):
@@ -129,17 +154,18 @@ class box(object):
         g.abs_move(z=start_z)
 
 if __name__ == "__main__":
-    b = box(height=60, width=70, depth=60, thickness=12.7,
-            depth_increment = 2, depth_to_carve = 18)
+    b = box(height=60, width=70, depth=60, thickness=14,
+            depth_increment = 1, depth_to_carve = 18)
     box_gap = 30
 
     b.g.feed(1000) # plywood
     
-    b.box_drill(b.box_bottom)
-    b.box_drill(b.box_side, b.width+box_gap)
-    b.box_drill(b.box_side, b.width+b.height+box_gap*2)
-    b.box_drill(b.box_front, b.width+(b.height*2)+box_gap*3)
-    b.box_drill(b.box_front, b.width+(b.height*3)+box_gap*4)
+    #b.box_drill(b.box_bottom)
+    b.box_drill(b.box_side)
+    #b.box_drill(b.box_side, b.width+box_gap)
+    #b.box_drill(b.box_side, b.width+b.height+box_gap*2)
+    #b.box_drill(b.box_front, b.width+(b.height*2)+box_gap*3)
+    #b.box_drill(b.box_front, b.width+(b.height*3)+box_gap*4)
 
     b.g.view(backend="matplotlib")
 
