@@ -61,12 +61,12 @@ class dovetail(object):
         self.slop = self.constraints.solve_for_slop(height)
         self.height = height
         self.wood_thickness = wood_thickness
-        print '; Period = ', self.period
-        print '; Periods = ', self.periods
-        print '; Slop = ', self.slop
-        print '; Bit diameter = ', self.bit_diameter
-        print '; Wood thickness = ', self.wood_thickness
-        print '; Height = ', self.height
+        print('; Period = ', self.period)
+        print('; Periods = ', self.periods)
+        print('; Slop = ', self.slop)
+        print('; Bit diameter = ', self.bit_diameter)
+        print('; Wood thickness = ', self.wood_thickness)
+        print('; Height = ', self.height)
         self.x_margin = 10
         assert self.x_margin > self.bit_diameter
         self.rapid_speed = 600
@@ -89,13 +89,14 @@ class dovetail(object):
         # Get us out of the 0,0 position; we expect to start 
         # right at the corner of the vertical piece.
         x_start = self.x_margin + self.bit_diameter
-        print '; x_start = ', x_start
-        print '; x_margin = ', self.x_margin
+        print('; x_start = ', x_start)
+        print('; x_margin = ', self.x_margin)
 
         # How much shorter the bit is at the top than the bottom
         # because it is an angled bit.
-        width_delta = self.height*math.tan(self.bit_info.bit_angle)
-        print '; width delta = ', width_delta, ' ', self.height, ' * ', math.tan(self.bit_info.bit_angle)
+        width_delta = self.height * math.tan(self.bit_info.bit_angle)
+
+        print('; width delta = {} {} * {}'.format(width_delta, self.height, math.tan(self.bit_info.bit_angle)))
 
         g.feed(self.rapid_speed)
         g.abs_move(x=x_start)
@@ -103,18 +104,18 @@ class dovetail(object):
 
         # Figure out where we want our cuts to start
         start_points = [(i * self.period) + (self.slop/2.0) - self.period for i in range(self.periods)]
-        print '; start_points = ', start_points
+        print('; start_points = ', start_points)
 
         x_delta = self.x_margin + (2.0* self.wood_thickness)
-        print '; x_delta = ', x_delta
+        print('; x_delta = ', x_delta)
 
         def carve_period(width):
             """ This will carve out a section, starting at our current y and going for width.
             You can use this to simulate a larger bit size by setting width to be larger than the
             bit size. """
-            print '; start of width'.format(width)
+            print('; start of width'.format(width))
             y_offset = 0.0
-            print '; y at start', g.current_position['y']
+            print('; y at start', g.current_position['y'])
             start_y = g.current_position['y']
             g.move(y=self.bit_radius)
 
@@ -134,8 +135,8 @@ class dovetail(object):
                     g.move(x=-x_delta)
                 g.move(x=+x_delta)
 
-            print '; y at end', g.current_position['y']
-            print ';end of width {}'.format(width)
+            print('; y at end', g.current_position['y'])
+            print(';end of width {}'.format(width))
             width_travelled = g.current_position['y'] - start_y
             width_cut = width_travelled + self.bit_radius # Take into account the initial move
             assert abs(width - width_cut) < EPSILON, 'Incorrect width cut {} != {}'.format(width, width_cut)
@@ -146,11 +147,11 @@ class dovetail(object):
 
 
         def carve_arc():
-            print ';start of arc'
+            print(';start of arc')
             arc_diameter = self.bit_info.diameter_at_height(self.height)
             g.arc(x=arc_diameter, y=arc_diameter, radius=arc_diameter, direction='CCW')
             g.arc(x=-arc_diameter, y=arc_diameter, radius=arc_diameter, direction='CCW')
-            print ';end of arc'
+            print(';end of arc')
 
         for y_start in start_points:
             g.abs_move(x=x_start, y=y_start)

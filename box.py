@@ -73,7 +73,7 @@ class box(object):
         g.move(0, 0, self.mark_height)
         g.move(0, 0, -self.mark_height)
         self.mark_height += 5
-        print g.current_position
+        print(g.current_position)
 
     def box_panel(self, index, alternate=False):
         g = self.g
