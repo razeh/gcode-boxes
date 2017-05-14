@@ -2,8 +2,6 @@
 
 from mecode import GMatrix
 import math
-import time
-
 
 class box(object):
     def __init__(self, height, width, depth, thickness, depth_increment, depth_to_carve):
@@ -76,7 +74,6 @@ class box(object):
         print(g.current_position)
 
     def box_panel(self, index, alternate=False):
-        g = self.g
         tab_count = self.tabs[index]
         width = self.dimensions[index]/(1+(tab_count-1)*2.0)
 

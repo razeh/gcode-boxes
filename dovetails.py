@@ -7,10 +7,8 @@
 # we cut the slots too far.
 
 import math
-import sys
 from mecode import GMatrix
-from mecode import G
-from bit_info import DOVETAIL_BIT_1
+#from bit_info import DOVETAIL_BIT_1
 from bit_info import DOVETAIL_BIT_2
 
 

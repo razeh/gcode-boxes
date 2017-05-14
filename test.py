@@ -5,8 +5,6 @@
 
 import math
 from mecode import GMatrix
-import time
-
 
 class box(object):
     def __init__(self, height, width):
