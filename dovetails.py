@@ -105,7 +105,7 @@ class dovetail(object):
         start_points = [(i * self.period) + (self.slop/2.0) - self.period for i in range(self.periods)]
         print '; start_points = ', start_points
 
-        x_delta = self.x_margin + (2.0* self.wood_thickness)
+        x_delta = self.x_margin + (2.0* self.wood_thickness) + width_delta
         print '; x_delta = ', x_delta
 
         def carve_period(width):
@@ -166,7 +166,7 @@ class dovetail(object):
 
 
 def get_dovetail():
-    d = dovetail(wood_thickness=16.4, wood_width=295.0, height=25.4*(3.0/8.0), bit_info=DOVETAIL_BIT_2)
+    d = dovetail(wood_thickness=16.55, wood_width=247, height=25.4*(3.0/8.0), bit_info=DOVETAIL_BIT_2)
     return d
 
 if __name__ == "__main__":

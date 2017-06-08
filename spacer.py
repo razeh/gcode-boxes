@@ -13,6 +13,7 @@ class spacer(object):
         self.bit_info = bit_info
         self.dovetail = dovetail
         self.width = dovetail.period / 2.0
+        print('; width = {}'.format(self.width))
 
     def __call__(self):
         g = self.g
@@ -35,7 +36,7 @@ class spacer(object):
             
 if __name__ == "__main__":
     length = 100
-    depth = 6.35
+    depth = 25.4*(3.0/8.0) #6.35
     
     s = spacer(length, depth, bit_info=STRAIGHT_BIT_1, dovetail=dovetails.get_dovetail())
     s()
