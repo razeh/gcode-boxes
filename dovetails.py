@@ -165,7 +165,7 @@ class dovetail(object):
 
 
 def get_dovetail():
-    d = dovetail(wood_thickness=16.55, wood_width=247, height=25.4*(3.0/8.0), bit_info=DOVETAIL_BIT_2)
+    d = dovetail(wood_thickness=17.0, wood_width=243, height=25.4*(3.0/8.0), bit_info=DOVETAIL_BIT_2)
     return d
 
 if __name__ == "__main__":
