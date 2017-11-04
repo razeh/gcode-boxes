@@ -4,7 +4,8 @@
 # the y move to get to the start of the arcs is at feed rate, not rapid move rate
 # there are a bunch of redundant moves while doing the arcs
 # when cutting the slots we go backwards for a bit.
-# we cut the slots too far.
+#
+# All measurements are in millimeters.
 
 import math
 from mecode import GMatrix
@@ -21,16 +22,22 @@ class Constraints(object):
     h * tan(e) = d - (p/2)
     
     """
-    def __init__(self, largest_bit_diameter, bit_angle, wood_width):
+    def __init__(self, largest_bit_diameter, bit_angle, wood_width, bit_extra=0.0):
         self.largest_bit_diameter = largest_bit_diameter
         self.bit_angle = bit_angle
         self.wood_width = wood_width
+        # Extra distance we add for pin-to-pin because our CNC
+        # bit isn't rigid, and is going to make a hole bigger than the bit.
+        # This can vary with the wood you are cutting as well; I've seen
+        # plain sawn poplar require more than white quartersawn oak.
+        self.bit_extra = bit_extra
 
     def solve_for_period(self, height):
         " Distance from pin-to-pin for a given height."
-        return 2 * (self.largest_bit_diameter - (height * math.tan(self.bit_angle)))
+        return (2 * (self.largest_bit_diameter - (height * math.tan(self.bit_angle))))+self.bit_extra
 
     def solve_for_periods(self, height):
+        " How many times are we going to be cutting pins. "
         period = self.solve_for_period(height)
         return int(math.floor(self.wood_width / period))
 
@@ -50,25 +57,30 @@ class CarvingSpeed(object):
         self.dovetail.g.feed(self.dovetail.rapid_speed)
 
 class dovetail(object):
-    def __init__(self, wood_thickness, wood_width, height, bit_info):
+    def __init__(self, wood_thickness, wood_width, height, bit_info, bit_extra):
         self.g = GMatrix()
-        self.constraints = Constraints(bit_info.largest_bit_diameter, bit_info.bit_angle, wood_width)
+        self.constraints = Constraints(bit_info.largest_bit_diameter, 
+                                       bit_info.bit_angle, 
+                                       wood_width,
+                                       bit_extra)
         self.bit_info = bit_info
         self.wood_width = wood_width
         self.period = self.constraints.solve_for_period(height)
         self.slop = self.constraints.solve_for_slop(height)
         self.height = height
         self.wood_thickness = wood_thickness
+        self.bit_extra = bit_extra
         print('; Period = ', self.period)
         print('; Periods = ', self.periods)
         print('; Slop = ', self.slop)
         print('; Bit diameter = ', self.bit_diameter)
         print('; Wood thickness = ', self.wood_thickness)
         print('; Height = ', self.height)
+        print('; Bit extra = ', bit_extra)
         self.x_margin = 10
         assert self.x_margin > self.bit_diameter
-        self.rapid_speed = 600
-        self.carving_speed = 100
+        self.rapid_speed = 600*1.5
+        self.carving_speed = 150
 
     @property
     def bit_diameter(self):
@@ -142,12 +154,11 @@ class dovetail(object):
         # Set parameters for the arcs that will fit into the curved
         # portions we cut. The arcs need to match the bit we are
         # using.
-
-
         def carve_arc():
             print(';start of arc')
             arc_diameter = self.bit_info.diameter_at_height(self.height)
             g.arc(x=arc_diameter, y=arc_diameter, radius=arc_diameter, direction='CCW')
+            g.move(y=self.bit_extra)
             g.arc(x=-arc_diameter, y=arc_diameter, radius=arc_diameter, direction='CCW')
             print(';end of arc')
 
@@ -165,7 +176,11 @@ class dovetail(object):
 
 
 def get_dovetail():
-    d = dovetail(wood_thickness=17.0, wood_width=243, height=25.4*(3.0/8.0), bit_info=DOVETAIL_BIT_2)
+    d = dovetail(wood_thickness=16.8, 
+                 wood_width=225.3,  #226
+                 height=25.4*(3.0/8.0), 
+                 bit_info=DOVETAIL_BIT_2,
+                 bit_extra=.5)
     return d
 
 if __name__ == "__main__":
