@@ -180,7 +180,7 @@ def get_dovetail():
                  wood_width=225.3,  #226
                  height=25.4*(3.0/8.0), 
                  bit_info=DOVETAIL_BIT_2,
-                 bit_extra=.5)
+                 bit_extra=0.5)
     return d
 
 if __name__ == "__main__":

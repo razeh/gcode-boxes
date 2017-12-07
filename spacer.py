@@ -35,7 +35,7 @@ class spacer(object):
             cutting_pass()
             
 if __name__ == "__main__":
-    length = 100
+    length = 150
     depth = 25.4*(3.0/8.0) #6.35
     
     s = spacer(length, depth, bit_info=STRAIGHT_BIT_1, dovetail=dovetails.get_dovetail())
