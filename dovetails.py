@@ -10,6 +10,7 @@
 import math
 from mecode import GMatrix
 #from bit_info import DOVETAIL_BIT_1
+import argparse
 from bit_info import DOVETAIL_BIT_2
 
 
@@ -94,8 +95,12 @@ class dovetail(object):
     def periods(self):
         return self.constraints.solve_for_periods(self.height) + 2 # one extra for the start and end.
 
-    def dovetail(self):
+    def dovetail(self, mirror_x=False):
         g = self.g
+        # When we are carving dovetails of where one box side isn't the same length
+        # as the other, we might want to start from different ends of the pieces.
+        if mirror_x:
+            g.reflect(0)
         # Get us out of the 0,0 position; we expect to start 
         # right at the corner of the vertical piece.
         x_start = self.x_margin + self.bit_diameter
@@ -184,5 +189,8 @@ def get_dovetail():
     return d
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate gcode for dovetails")
+    parser.add_argument('--mirror-x', help='Mirror the x-axis, useful for joining different length pieces', default=False, action='store_true')
+    args = parser.parse_args()
     d = get_dovetail()
-    d.dovetail()
+    d.dovetail(args.mirror_x)
