@@ -66,6 +66,7 @@ class boatbox(object):
         g.abs_move(z=0.0)
 
     def box(self):
+        self.g.feed(250)
         self.clear_box()
         self.bottom_wedge()
         
