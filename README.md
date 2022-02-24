@@ -3,7 +3,7 @@ GCode Boxes
 
 ### GCode Boxes
 
-A python script that generates carving instructions for half bind
+A python script that generates carving instructions for half blind
 dovetails.
 
 The expectation is that you have a CNC router where you can mount one
