@@ -4,6 +4,7 @@ from __future__ import print_function
 from mecode import GMatrix
 from bit_info import DOVETAIL_BIT_1
 from bit_info import DOVETAIL_BIT_2
+from bit_info import DOVETAIL_BIT_3
 import math
 
 def extra_width_for_depth(z, bit):
@@ -53,6 +54,9 @@ class boatbox(object):
             self.spiral_box(self.x_length_at_z(z), self.y_length_at_z(z)) 
 
         def move_to_start_position():
+            # We want to make sure that we end up going completely
+            # around the edge, so we go to where the last inside
+            # part of the sprial didn't finish off.
             g.abs_move(x=-self.offset_for_z(z)+self.bit_radius*2.0,
                        y=-self.offset_for_z(z))
             g.abs_move(x=-self.offset_for_z(z), y=-self.offset_for_z(z))
@@ -79,8 +83,19 @@ class boatbox(object):
         bit_radius = self.bit_diameter/2.0
         y_delta = y_length - bit_radius
         x_delta = x_length - bit_radius
-        if y_delta < 0: return
-        if x_delta < 0: return
+
+        if y_delta < 0 and x_delta < 0: return
+
+        if x_delta < 0 and y_delta > 0:
+            print('; y cleanup')
+            g.move(y=y_delta)
+            return
+        if y_delta < 0 and x_delta > 0:
+            x_cleanup = True
+            print('; x cleanup')
+            g.move(x=x_delta)
+            return
+        
         overlap = 1.0
         g.move(y=y_delta)
         g.move(x=x_delta)
@@ -90,14 +105,19 @@ class boatbox(object):
         self.spiral_box(x_length-self.bit_diameter*2*overlap,
                         y_length-self.bit_diameter*2*overlap)
 
+    def withdraw(self):
+        print('; withdraw ')
+        g = self.g
+        g.abs_move(x=self.x_length/2.0, y=self.y_length/2.0)
+        g.abs_move(z=5)
+
     def box(self):
         self.g.feed(250)
         self.clear_box()
-        
+        self.withdraw()
 
 if __name__ == "__main__":
-    bit = DOVETAIL_BIT_2
-    bb = boatbox(50.0, 60.0, bit.depth_of_cut, 1, bit)
+    bit = DOVETAIL_BIT_1
+    bb = boatbox(50.0, 60.0, 10.0, 1, bit)
     bb.box()
-    #bb.spiral_box(80, 100)
     
