@@ -50,17 +50,15 @@ class boatbox(object):
     def clear_box(self):
         g = self.g
         z = 0
-        def spiral_box():
-            self.spiral_box(self.x_length_at_z(z), self.y_length_at_z(z)) 
 
         def move_to_start_position():
-            # We want to make sure that we end up going completely
-            # around the edge, so we go to where the last inside
-            # part of the sprial didn't finish off.
-            g.abs_move(x=-self.offset_for_z(z)+self.bit_radius*2.0,
-                       y=-self.offset_for_z(z))
             g.abs_move(x=-self.offset_for_z(z), y=-self.offset_for_z(z))
-            
+
+        def spiral_box():
+            move_to_start_position()
+            self.spiral_box(-self.offset_for_z(z), -self.offset_for_z(z),
+                            self.x_length_at_z(z), self.y_length_at_z(z))
+
         while True:
             print('; starting spiral box z=', z)
             spiral_box()
@@ -77,33 +75,39 @@ class boatbox(object):
             move_to_start_position()
             spiral_box()
 
-    def spiral_box(self, x_length, y_length):
+    def spiral_box(self, start_x, start_y, x_length, y_length):
         print('; spiral box ', x_length, y_length)
         g = self.g
         bit_radius = self.bit_diameter/2.0
+
         y_delta = y_length - bit_radius
         x_delta = x_length - bit_radius
-
-        if y_delta < 0 and x_delta < 0: return
-
-        if x_delta < 0 and y_delta > 0:
-            print('; y cleanup')
-            g.move(y=y_delta)
-            return
-        if y_delta < 0 and x_delta > 0:
-            x_cleanup = True
-            print('; x cleanup')
-            g.move(x=x_delta)
-            return
         
         overlap = 1.0
-        g.move(y=y_delta)
-        g.move(x=x_delta)
-        g.move(y=-y_delta)
-        g.move(x=-x_delta+self.bit_diameter)
-        g.move(y=self.bit_diameter)
-        self.spiral_box(x_length-self.bit_diameter*2*overlap,
-                        y_length-self.bit_diameter*2*overlap)
+
+        def y_move():
+            return min(self.bit_diameter*overlap, y_delta - y_amount_moved['value'])
+
+        y_amount_moved = { 'value': 0.0 }
+        def move_y():
+            if y_amount_moved['value'] < y_delta:
+                y = y_move()
+                g.move(y=y)
+                y_amount_moved['value'] += y
+
+        g.abs_move(start_x, start_y)
+        while y_amount_moved['value'] < y_delta:
+            g.move(x=x_delta)
+            move_y()
+            g.move(x=-x_delta)
+            move_y()
+
+        print('; cleanup at {}'.format(y_amount_moved['value']))
+        g.abs_move(start_x, start_y)
+        g.abs_move(start_x+x_delta, y=start_y)
+        g.abs_move(start_x+x_delta, y=start_y+y_delta)
+        g.abs_move(start_x, y=start_y+y_delta)
+        g.abs_move(start_x, start_y)
 
     def withdraw(self):
         print('; withdraw ')
@@ -117,7 +121,10 @@ class boatbox(object):
         self.withdraw()
 
 if __name__ == "__main__":
+    width = 3.25 * 25.4
+    height = 5.75 * 25.4
+    depth = (5/8.0) * 25.4
     bit = DOVETAIL_BIT_1
-    bb = boatbox(50.0, 60.0, 10.0, 1, bit)
+    bb = boatbox(width, height, 10.0, 1, bit)
     bb.box()
     
