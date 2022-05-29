@@ -112,7 +112,7 @@ class boatbox(object):
     def withdraw(self):
         print('; withdraw ')
         g = self.g
-        g.abs_move(x=self.x_length/2.0, y=self.y_length/2.0)
+        g.abs_move(x=(self.x_length-self.bit_diameter)/2.0, y=(self.y_length-self.bit_diameter)/2.0)
         g.abs_move(z=5)
 
     def box(self):
@@ -122,7 +122,7 @@ class boatbox(object):
 
 if __name__ == "__main__":
     width = 3.25 * 25.4
-    height = 5.75 * 25.4
+    height = .75 * 25.4
     depth = (5/8.0) * 25.4
     bit = DOVETAIL_BIT_1
     bb = boatbox(width, height, 10.0, 1, bit)
