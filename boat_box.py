@@ -89,18 +89,18 @@ class boatbox(object):
             return min(self.bit_diameter*overlap, y_delta - y_amount_moved['value'])
 
         y_amount_moved = { 'value': 0.0 }
-#         def move_y():
-#             if y_amount_moved['value'] < y_delta:
-#                 y = y_move()
-#                 g.move(y=y)
-#                 y_amount_moved['value'] += y
+        def move_y():
+            if y_amount_moved['value'] < y_delta:
+                y = y_move()
+                g.move(y=y)
+                y_amount_moved['value'] += y
 
-#         g.abs_move(start_x, start_y)
-#         while y_amount_moved['value'] < y_delta:
-#             g.move(x=x_delta)
-#             move_y()
-#             g.move(x=-x_delta)
-#             move_y()
+        g.abs_move(start_x, start_y)
+        while y_amount_moved['value'] < y_delta:
+            g.move(x=x_delta)
+            move_y()
+            g.move(x=-x_delta)
+            move_y()
 
         print('; cleanup at {}'.format(y_amount_moved['value']))
         g.abs_move(start_x, start_y)
