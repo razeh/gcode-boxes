@@ -89,18 +89,18 @@ class boatbox(object):
             return min(self.bit_diameter*overlap, y_delta - y_amount_moved['value'])
 
         y_amount_moved = { 'value': 0.0 }
-        def move_y():
-            if y_amount_moved['value'] < y_delta:
-                y = y_move()
-                g.move(y=y)
-                y_amount_moved['value'] += y
+#         def move_y():
+#             if y_amount_moved['value'] < y_delta:
+#                 y = y_move()
+#                 g.move(y=y)
+#                 y_amount_moved['value'] += y
 
-        g.abs_move(start_x, start_y)
-        while y_amount_moved['value'] < y_delta:
-            g.move(x=x_delta)
-            move_y()
-            g.move(x=-x_delta)
-            move_y()
+#         g.abs_move(start_x, start_y)
+#         while y_amount_moved['value'] < y_delta:
+#             g.move(x=x_delta)
+#             move_y()
+#             g.move(x=-x_delta)
+#             move_y()
 
         print('; cleanup at {}'.format(y_amount_moved['value']))
         g.abs_move(start_x, start_y)
@@ -112,19 +112,24 @@ class boatbox(object):
     def withdraw(self):
         print('; withdraw ')
         g = self.g
-        g.abs_move(x=(self.x_length-self.bit_diameter)/2.0, y=(self.y_length-self.bit_diameter)/2.0)
+        g.abs_move(x=(self.x_length-self.bit_diameter)/2.0, y=(self.y_length-self.bit_diameter)/2.0, z=-self.z_length+1.0)
         g.abs_move(z=5)
 
     def box(self):
-        self.g.feed(250)
+        self.g.feed(400)
         self.clear_box()
         self.withdraw()
 
 if __name__ == "__main__":
-    width = 3.25 * 25.4
-    height = .75 * 25.4
-    depth = (5/8.0) * 25.4
     bit = DOVETAIL_BIT_1
-    bb = boatbox(width, height, 10.0, 1, bit)
+    width = 1.25 * 25.4 
+    height = 9.75 * 25.4
+    depth = 12.7
+
+    assert bit.largest_bit_diameter < width, "bit diameter ({}) < width ({})".format(bit.largest_bit_diameter, width)
+    assert bit.largest_bit_diameter < height, "bit diameter ({}) < height ({})".format(bit.largest_bit_diameter, height)
+    assert bit.depth_of_cut >= depth, "bit depth of cut {} < depth ({})".format(bit.depth_of_cut, depth)
+
+    bb = boatbox(width, height, depth, 1, bit)
     bb.box()
     
